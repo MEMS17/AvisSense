@@ -1,0 +1,10 @@
+gradio
+torch
+transformers
+datasets
+scikit-learn
+pandas
+numpy
+accelerate
+sentencepiece
+protobuf
