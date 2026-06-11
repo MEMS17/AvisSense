@@ -11,7 +11,9 @@ CE QUE FAIT CE FICHIER :
     développeur et consommera ces endpoints (d'où le CORS activé plus bas).
 
 LES ENDPOINTS :
-    GET  /          -> informations sur l'API (nom, version, endpoints)
+    GET  /          -> le front minimal (frontend/index.html) : la consigne
+                       « colle un avis -> positif/négatif + confiance »
+    GET  /info      -> informations sur l'API (nom, version, endpoints)
     GET  /health    -> état de l'API + modèle chargé (vérification déploiement)
     POST /predict   -> {"text": "Ce film est incroyable"}
                     -> {"label": "positif", "confidence": 0.94,
@@ -53,6 +55,7 @@ from pathlib import Path                # Chemins portables
 import torch                            # Exécution du modèle
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles  # Sert le front (fichiers statiques)
 from pydantic import BaseModel, Field   # Schémas de validation des entrées/sorties
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
@@ -60,6 +63,8 @@ from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 # Racine du projet : ce fichier est dans api/, donc 2 niveaux au-dessus.
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+# Dossier du front minimal servi par l'API (consigne : « petit front »)
+FRONTEND_DIR = PROJECT_ROOT / "frontend"
 
 # D'OÙ VIENT LE MODÈLE ? os.getenv lit une variable d'environnement :
 #   - En LOCAL : la variable MODEL_ID n'existe pas -> on prend la valeur par
@@ -221,12 +226,13 @@ def run_inference(text: str) -> dict:
 # ─────────────────────────────────────────────────────────────────────────────
 # ENDPOINTS
 # ─────────────────────────────────────────────────────────────────────────────
-@app.get("/", tags=["info"])
+@app.get("/info", tags=["info"])
 def api_info():
-    """Point d'entrée : décrit l'API.
+    """Décrit l'API en JSON.
 
     Utile au dev frontend et comme test rapide ("est-ce que l'API répond ?").
     Les `tags` regroupent les endpoints par catégorie dans Swagger.
+    (GET / sert le front minimal — voir le app.mount tout en bas.)
     """
     return {
         "name": "AvisSense API",
@@ -234,7 +240,8 @@ def api_info():
         "description": "Analyse de sentiment d'avis cinéma en français "
                        "(DistilCamemBERT fine-tuné sur Allociné)",
         "endpoints": {
-            "GET /": "ces informations",
+            "GET /": "le front minimal (coller un avis -> prédiction)",
+            "GET /info": "ces informations",
             "GET /health": "état de l'API et du modèle",
             "GET /docs": "documentation interactive Swagger",
             "POST /predict": 'body {"text": "..."} -> label + confiance',
@@ -302,3 +309,17 @@ def predict_sentiment(review: ReviewInput):
 
     # ** déplie le dict result dans les champs du modèle Pydantic
     return PredictionOutput(**result, processing_time_ms=elapsed_ms)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# FRONT MINIMAL — monté EN DERNIER, c'est important
+# ─────────────────────────────────────────────────────────────────────────────
+# app.mount("/") sert les fichiers du dossier frontend/ à la racine du site.
+# html=True : GET / renvoie automatiquement index.html -> en ouvrant l'URL
+# du Space, le correcteur tombe directement sur « colle un avis -> résultat ».
+#
+# POURQUOI EN DERNIER ? FastAPI résout les routes dans l'ordre de
+# déclaration : /predict, /health, /info et /docs (déclarées au-dessus)
+# restent prioritaires ; tout le reste tombe sur les fichiers statiques.
+# Déclaré avant, le mount "avalerait" toutes les requêtes, API comprise.
+app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")

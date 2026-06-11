@@ -2,9 +2,9 @@
 
 > Projet de fin de module **M106 — Intro ML/DL** · Sujet : analyse de sentiment d'avis en français (secteur culture)
 
-Classification binaire d'avis de cinéma : on colle un avis en français, le modèle prédit **positif** ou **négatif** avec un **score de confiance**. Un **DistilCamemBERT** est fine-tuné (transfer learning) sur le dataset **Allociné**, puis servi par une **API FastAPI** déployable sur Hugging Face Spaces.
+Classification binaire d'avis de cinéma : **on colle un avis en français, le modèle prédit positif ou négatif avec un score de confiance** (la consigne du sujet, mot pour mot). Un **DistilCamemBERT** est fine-tuné (transfer learning) sur le dataset **Allociné**, **servi par une API FastAPI** avec un **petit front** intégré, le tout déployé sur **Hugging Face Spaces** — toute la chaîne, sans usine à gaz.
 
-> Le frontend est développé séparément par un autre développeur : ce repo contient le modèle et l'API. Le contrat d'API est documenté ci-dessous (section 8) et dans le Swagger auto-généré (`/docs`).
+> Le repo inclut un **front minimal** (HTML/CSS/JS, servi par l'API à `GET /`) qui garantit la chaîne complète déployée. Un front plus complet est développé séparément par un autre membre de l'équipe : il consommera les mêmes endpoints (contrat d'API en section 8, Swagger sur `/docs`, CORS déjà activé).
 
 ```
 POST /predict  {"text": "Ce film est incroyable"}
@@ -17,8 +17,20 @@ POST /predict  {"text": "Ce film est incroyable"}
 
 - Fine-tuner un modèle de langage pré-entraîné (transfer learning) pour classer des avis de cinéma en français : positif / négatif.
 - Trancher la **décision architect** : geler le modèle et n'entraîner qu'une tête, ou fine-tuner entièrement ? (section 4)
-- Exposer le modèle via une API REST (FastAPI) consommable par un frontend externe.
-- Déployer publiquement sur Hugging Face Spaces.
+- **Servir** le modèle via une API REST (FastAPI) + un petit front « colle un avis → résultat ».
+- Déployer publiquement la chaîne complète sur Hugging Face Spaces.
+
+### Conformité aux consignes du module
+
+| Consigne | Où c'est respecté |
+|---|---|
+| Orienté Deep Learning (fine-tuning d'un modèle de texte) | `scripts/train.py` — DistilCamemBERT fine-tuné sur Allociné |
+| Modèle **servi** avec FastAPI | `api/main.py` — `POST /predict` |
+| **Petit front** | `frontend/` — servi par l'API à `GET /` |
+| Déployé (HF Spaces ou équivalent) | `Dockerfile` — Space Docker, section 9 |
+| Secteur ≠ démos du cours | culture / cinéma |
+| Décisions défendues (modèle, stratégie de transfer) | sections 3 et 4 — les **deux** stratégies sont implémentées et comparées |
+| Livrables | code + README (ce fichier) + lien du modèle déployé (section 9) + vidéo ≤ 10 min sur Teams **avant vendredi 13h** |
 
 ## 2. Dataset — Allociné (avis ciné uniquement)
 
@@ -66,7 +78,11 @@ Chaque run écrit ses métriques dans `model/sentiment_model/training_metrics.js
 ```
 AvisSense/
 ├── api/
-│   └── main.py              # API FastAPI : GET /, GET /health, POST /predict
+│   └── main.py              # API FastAPI : front sur /, /info, /health, POST /predict
+├── frontend/
+│   ├── index.html           # Front minimal : zone de texte + bouton + résultat
+│   ├── style.css            # Style (label coloré + barre de confiance)
+│   └── script.js            # fetch() vers POST /predict
 ├── model/
 │   └── sentiment_model/     # Modèle fine-tuné (créé par train.py, non versionné)
 ├── scripts/
@@ -82,7 +98,8 @@ AvisSense/
 
 **Rôle des dossiers** :
 - `scripts/` — cycle de vie du modèle (entraînement, évaluation, publication). Séparé de l'API : on peut ré-entraîner sans toucher au serveur.
-- `api/` — uniquement le serveur. Charge le modèle une fois au démarrage (lifespan), expose les endpoints, CORS activé pour le frontend externe.
+- `api/` — le serveur. Charge le modèle une fois au démarrage (lifespan), expose les endpoints, sert le front, CORS activé pour le futur front externe.
+- `frontend/` — le petit front demandé par les consignes : fichiers statiques servis par FastAPI, aucune dépendance supplémentaire. Remplaçable par le front complet de l'équipe sans toucher à l'API.
 - `model/` — artefact produit par l'entraînement. Ignoré par git (270 Mo) : les poids sont stockés sur le HF Hub, le code sur GitHub.
 
 ## 6. Installation
@@ -128,16 +145,18 @@ python scripts/predict.py "Ce film est un chef-d'œuvre absolu !"
 python scripts/evaluate.py --max-test 2000 --show-errors 5
 ```
 
-## 8. API — contrat pour le frontend
+## 8. Lancement : API + front
 
 ```bash
 uvicorn api.main:app --reload
-# Swagger : http://127.0.0.1:8000/docs
+# Front    : http://127.0.0.1:8000
+# Swagger  : http://127.0.0.1:8000/docs
 ```
 
 | Méthode | Route | Description |
 |---|---|---|
-| GET | `/` | Informations sur l'API |
+| GET | `/` | Le front minimal : coller un avis → prédiction + confiance |
+| GET | `/info` | Informations sur l'API (JSON) |
 | GET | `/health` | `{"status": "ok", "model_loaded": true, ...}` |
 | POST | `/predict` | Prédiction de sentiment |
 
@@ -197,7 +216,7 @@ git remote add space https://huggingface.co/spaces/VOTRE_PSEUDO/avissense
 git push space main
 ```
 
-L'API est alors accessible publiquement : `https://VOTRE_PSEUDO-avissense.hf.space/docs`. La première requête après un réveil du Space est lente (téléchargement + chargement du modèle) ; `/health` permet au frontend de vérifier que le modèle est prêt.
+La chaîne complète est alors visible à l'URL publique du Space : `https://VOTRE_PSEUDO-avissense.hf.space/` ouvre directement le front « colle un avis → résultat » (et `/docs` la documentation de l'API). **C'est ce lien qu'on remet comme livrable « modèle déployé ».** La première requête après un réveil du Space est lente (téléchargement + chargement du modèle) ; `/health` permet de vérifier que le modèle est prêt — à faire avant la démo vidéo.
 
 ## 10. Limites
 
