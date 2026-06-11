@@ -2,7 +2,7 @@
 
 Analyse de sentiment d'avis en français avec CamemBERT fine-tuné sur le dataset Allociné.
 
-**Projet de fin de module M106 — Deep Learning**
+**Projet de fin de module M106 - Deep Learning**
 
 ## Demo
 
@@ -57,7 +57,5 @@ uv add gradio torch transformers datasets scikit-learn pandas numpy accelerate s
 uv run python app.py
 ```
 
-## Auteurs
-
-- [Russell](https://github.com/) — fine-tuning CamemBERT, déploiement HF Spaces, interface Gradio
-- Projet de groupe MEMS17, branche `test_russ`
+- Fine-tuning CamemBERT, déploiement HF Spaces, interface Gradio
+- Projet de groupe MEMS17
