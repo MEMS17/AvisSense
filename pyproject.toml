@@ -1,0 +1,18 @@
+[project]
+name = "avis-sense"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "accelerate>=1.14.0",
+    "datasets>=5.0.0",
+    "gradio>=6.17.3",
+    "ipykernel>=7.3.0",
+    "jupyter>=1.1.1",
+    "numpy>=2.4.6",
+    "pandas>=3.0.3",
+    "scikit-learn>=1.9.0",
+    "torch>=2.12.0",
+    "transformers>=5.11.0",
+]
