@@ -58,4 +58,3 @@ uv run python app.py
 ```
 
 - Fine-tuning CamemBERT, déploiement HF Spaces, interface Gradio
-- Projet de groupe MEMS17
