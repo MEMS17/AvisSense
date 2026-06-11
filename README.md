@@ -6,7 +6,7 @@ colorTo: red
 sdk: docker
 app_port: 7860
 pinned: false
-short_description: Analyse de sentiment d'avis cinema en francais avec DistilCamemBERT.
+short_description: Analyse de sentiment d'avis cinema en francais.
 ---
 # 🎬 AvisSense — Analyse de sentiment d'avis cinéma (français)
 
