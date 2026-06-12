@@ -3,7 +3,12 @@
 import argparse
 import json
 import os
+import sys
 from pathlib import Path
+
+# Console Windows en cp1252 : l'affichage des tokens SentencePiece (caractère
+# "▁") ferait planter print(). On force la sortie en UTF-8.
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 HF_CACHE_DIR = PROJECT_ROOT / "hf_cache"
@@ -213,7 +218,9 @@ def main():
         load_best_model_at_end=True,
         metric_for_best_model="f1",
         fp16=use_gpu,
-        logging_steps=50,
+        # Loss journalisée tous les 10 pas : assez fin pour tracer une vraie
+        # courbe même sur un petit run (96 pas), sans inonder la console.
+        logging_steps=10,
         report_to="none",
         seed=SEED,
     )

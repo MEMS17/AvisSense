@@ -1,11 +1,9 @@
 """Génère et sauvegarde les graphiques de métriques du modèle (PNG).
 
 Produit les figures classiques d'un rapport de projet ML, prêtes à insérer
-dans les slides ou la vidéo. Elles sont écrites dans notebooks/, à côté du
-notebook metrics_report.ipynb :
+dans les slides ou la vidéo. Elles sont écrites dans figures/ :
 
-    notebooks/
-    ├── metrics_report.ipynb
+    figures/
     ├── 1_loss_curves.png            Courbes de perte train/validation (diagnostic surapprentissage)
     ├── 2_metrics_par_epoque.png     Accuracy et F1 de validation par époque
     ├── 3_confusion_matrix_abs.png   Matrice de confusion (valeurs absolues)
@@ -39,8 +37,9 @@ from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 MODEL_DIR = PROJECT_ROOT / "model" / "sentiment_model"
-# Les figures sont écrites à côté du notebook, dans notebooks/
-FIGURES_DIR = PROJECT_ROOT / "notebooks"
+# Dossier de sortie des figures (versionné dans git : les images servent
+# aux slides et au README sans avoir à relancer une évaluation)
+FIGURES_DIR = PROJECT_ROOT / "figures"
 BASE_MODEL = "cmarkea/distilcamembert-base"  # Pour la baseline « brute » (non fine-tunée)
 CLASS_NAMES = ["négatif", "positif"]
 MAX_LENGTH = 256
@@ -83,7 +82,9 @@ def plot_loss_curves(history, output_path):
     eval_points = [(entry["epoch"], entry["eval_loss"]) for entry in history if "eval_loss" in entry]
 
     figure, axis = plt.subplots(figsize=(6, 4))
-    if train_points:
+    # Une courbe à moins de 2 points n'apporte rien (cas d'un run court avec
+    # une journalisation trop espacée) : on ne trace alors que la validation.
+    if len(train_points) >= 2:
         axis.plot(*zip(*train_points), marker="o", markersize=3,
                   label="Training loss", color="#1f77b4")
     if eval_points:
@@ -94,7 +95,9 @@ def plot_loss_curves(history, output_path):
     axis.set_title("Courbes de perte (diagnostic surapprentissage)")
     axis.legend()
     figure.tight_layout()
-    figure.savefig(output_path)
+    # bbox_inches="tight" : inclut les étiquettes d'axes dans l'image
+    # (sans ça, les labels de gauche des matrices de confusion sont rognés)
+    figure.savefig(output_path, bbox_inches="tight")
     plt.close(figure)
 
 
@@ -113,7 +116,9 @@ def plot_epoch_metrics(history, output_path):
     axis.set_title("Métriques de validation par époque")
     axis.legend()
     figure.tight_layout()
-    figure.savefig(output_path)
+    # bbox_inches="tight" : inclut les étiquettes d'axes dans l'image
+    # (sans ça, les labels de gauche des matrices de confusion sont rognés)
+    figure.savefig(output_path, bbox_inches="tight")
     plt.close(figure)
 
 
@@ -164,7 +169,9 @@ def plot_confusion(matrix, output_path, as_percent=False):
                       ha="center", va="center", color=color, fontsize=12)
     figure.colorbar(image, fraction=0.046)
     figure.tight_layout()
-    figure.savefig(output_path)
+    # bbox_inches="tight" : inclut les étiquettes d'axes dans l'image
+    # (sans ça, les labels de gauche des matrices de confusion sont rognés)
+    figure.savefig(output_path, bbox_inches="tight")
     plt.close(figure)
 
 
@@ -193,7 +200,9 @@ def plot_baseline_comparison(baseline_scores, finetuned_scores, output_path):
     axis.set_title("Baseline vs fine-tuné — gain apporté par le transfer learning")
     axis.legend()
     figure.tight_layout()
-    figure.savefig(output_path)
+    # bbox_inches="tight" : inclut les étiquettes d'axes dans l'image
+    # (sans ça, les labels de gauche des matrices de confusion sont rognés)
+    figure.savefig(output_path, bbox_inches="tight")
     plt.close(figure)
 
 
