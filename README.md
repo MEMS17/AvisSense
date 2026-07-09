@@ -25,9 +25,10 @@ L'utilisateur saisit ou colle un avis en français. L'application indique ensuit
 
 | Ressource | Lien |
 |---|---|
-| 🖥️ Application (frontend React) | https://avis-sense.vercel.app |
-| ⚙️ API FastAPI (Space Docker) | https://stive-g-avissense.hf.space/docs |
-| 🤖 Modèle fine-tuné (Hub) | https://huggingface.co/Stive-G/avissense-distilcamembert |
+| 🖥️ Application (frontend React) | [avis-sense.vercel.app](https://avis-sense.vercel.app/) |
+| 🚀 Space Hugging Face (API Docker) | [Stive-G/AvisSense](https://huggingface.co/spaces/Stive-G/AvisSense) |
+| ⚙️ Documentation interactive de l'API | [stive-g-avissense.hf.space/docs](https://stive-g-avissense.hf.space/docs) |
+| 🤖 Modèle fine-tuné (Hub) | [Stive-G/avissense-distilcamembert](https://huggingface.co/Stive-G/avissense-distilcamembert) |
 
 > La première requête après une période d'inactivité peut prendre ~30 s (réveil du Space et chargement du modèle) ; `GET /health` indique si le modèle est prêt.
 
